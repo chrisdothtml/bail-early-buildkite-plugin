@@ -1,0 +1,3 @@
+name: Fail fast
+description: If any jobs or triggered builds fail, cancel the parent build immediately
+author: https://github.com/chrisdothtml

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# TODO: add `if` config param (BUILDKITE_PLUGIN_FAIL_FAST_IF)
+
+BUILD_NUMBER="${BUILDKITE_TRIGGERED_FROM_BUILD_NUMBER:-$BUILDKITE_BUILD_NUMBER}"
+ORG="$BUILDKITE_ORGANIZATION_SLUG"
+PIPELINE="${BUILDKITE_TRIGGERED_FROM_BUILD_PIPELINE_SLUG:-$BUILDKITE_PIPELINE_SLUG}"
+
+if [ -z "$BUILD_NUMBER" ]; then
+  echo "unable to find a build to cancel; doing nothing"
+  exit 0
+fi
+
+curl -s "https://api.buildkite.com/v2/organizations/${ORG}/pipelines/${PIPELINE}/builds/$BUILD_NUMBER/cancel" \
+  -X PUT \
+  -H "Authorization: Bearer $BUILDKITE_AGENT_ACCESS_TOKEN"
