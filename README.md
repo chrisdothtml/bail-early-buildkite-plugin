@@ -1,1 +1,1 @@
-# fail-fast-buildkite-plugin
+# bail-early-buildkite-plugin
