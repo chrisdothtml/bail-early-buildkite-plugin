@@ -1,9 +1,10 @@
 #!/bin/bash
 
-pwd && ls -l
-echo ""
-echo ""
-(cd "$(dirname $0)" && pwd && ls -l)
-echo ""
-echo ""
-(cd "$(dirname $0)/.." && pwd && ls -l)
+# pwd && ls -l
+# echo ""
+# echo ""
+# (cd "$(dirname $0)" && pwd && ls -l)
+# echo ""
+# echo ""
+# (cd "$(dirname $0)/.." && pwd && ls -l)
+echo "$0"
