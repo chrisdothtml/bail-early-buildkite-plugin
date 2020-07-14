@@ -1,5 +1,5 @@
-#!/usr/bin/env python
+#!/bin/bash
 
-import os
-
-os.system('ls -l')
+ls -l
+(cd "$(DIRNAME $0)" && ls -l)
+(cd "$(DIRNAME $0)/.." && ls -l)
