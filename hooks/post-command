@@ -7,4 +7,5 @@
 # echo ""
 # echo ""
 # (cd "$(dirname $0)/.." && pwd && ls -l)
-echo "$0"
+# echo "$0"
+(cd /var/lib/buildkite-agent/plugins/github-com-chrisdothtml-bail-early-buildkite-plugin-* && ls -l)
