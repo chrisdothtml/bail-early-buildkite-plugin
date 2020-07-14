@@ -1,4 +1,3 @@
 #!/bin/bash
 
-(cd "$BUILDKITE_PLUGINS_PATH/*bail-early*" && pwd && ls -l)
-# python "$BUILDKITE_PLUGINS_PATH/*bail-early*/bail-early.py"
+python "$BUILDKITE_PLUGINS_PATH"/*bail-early*/bail-early.py
