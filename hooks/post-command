@@ -40,7 +40,7 @@ graphql_query="mutation {
 curl -s https://graphql.buildkite.com/v1 \
   -X POST \
   -H "Authorization: Bearer $BUILDKITE_TOKEN" \
-  -d "{ query: \"$graphql_query\" }"
+  -d "{ \"query\": \"$graphql_query\" }"
 
 org="$BUILDKITE_ORGANIZATION_SLUG"
 pipeline="${BUILDKITE_TRIGGERED_FROM_BUILDKITE_PIPELINE_SLUG:-$BUILDKITE_PIPELINE_SLUG}"
