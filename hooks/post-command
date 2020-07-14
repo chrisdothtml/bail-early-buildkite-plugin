@@ -26,28 +26,37 @@ if [ -n "$if_condition" ]; then
   fi
 fi
 
-annotation_body="This build was canceled early because of failure in <a href='https://buildkite.com/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}/builds/${BUILDKITE_BUILD_NUMBER}#${BUILDKITE_JOB_ID}'>${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}#${BUILDKITE_BUILD_NUMBER}</a>."
-build_id="${BUILDKITE_TRIGGERED_FROM_BUILD_PIPELINE_SLUG:-$BUILDKITE_BUILD_ID}"
-graphql_build_id="$(printf "Build---%s" "$build_id" | base64)"
-graphql_query="mutation {
-  buildAnnotate(input: {buildID: \"$graphql_build_id\", body: \"$annotation_body\", style: ERROR}) {
-    annotation {
-      uuid
+function add_annotation() {
+  local annotation_body="This build was canceled early because of failure in <a href='https://buildkite.com/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}/builds/${BUILDKITE_BUILD_NUMBER}#${BUILDKITE_JOB_ID}'>${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}#${BUILDKITE_BUILD_NUMBER}</a>."
+  local build_id="${BUILDKITE_TRIGGERED_FROM_BUILD_PIPELINE_SLUG:-$BUILDKITE_BUILD_ID}"
+  local graphql_build_id="$(printf "Build---%s" "$build_id" | base64)"
+  local graphql_query="mutation {
+    buildAnnotate(input: {buildID: \"$graphql_build_id\", body: \"$annotation_body\", style: ERROR}) {
+      annotation {
+        uuid
+      }
     }
-  }
-}"
-# strip newlines and escape quotes
-graphql_query="$(echo "$graphql_query" | tr -d '\n' | sed 's/"/\\"/g')"
+  }"
+  # strip newlines and escape quotes
+  graphql_query="$(echo "$graphql_query" | tr -d '\n' | sed 's/"/\\"/g')"
 
-curl -s https://graphql.buildkite.com/v1 \
-  -X POST \
-  -H "Authorization: Bearer $BUILDKITE_TOKEN" \
-  -d "{ \"query\": \"$graphql_query\" }"
+  curl -s https://graphql.buildkite.com/v1 \
+    -X POST \
+    -H "Authorization: Bearer $BUILDKITE_TOKEN" \
+    -d "{ \"query\": \"$graphql_query\" }"
+}
 
-org="$BUILDKITE_ORGANIZATION_SLUG"
-pipeline="${BUILDKITE_TRIGGERED_FROM_BUILDKITE_PIPELINE_SLUG:-$BUILDKITE_PIPELINE_SLUG}"
-build_number="${BUILDKITE_TRIGGERED_FROM_BUILDKITE_BUILD_NUMBER:-$BUILDKITE_BUILD_NUMBER}"
+function cancel_build() {
+  local org="$BUILDKITE_ORGANIZATION_SLUG"
+  local pipeline="${BUILDKITE_TRIGGERED_FROM_BUILDKITE_PIPELINE_SLUG:-$BUILDKITE_PIPELINE_SLUG}"
+  local build_number="${BUILDKITE_TRIGGERED_FROM_BUILDKITE_BUILD_NUMBER:-$BUILDKITE_BUILD_NUMBER}"
 
-curl -s "https://api.buildkite.com/v2/organizations/${org}/pipelines/${pipeline}/builds/$build_number/cancel" \
-  -X PUT \
-  -H "Authorization: Bearer $BUILDKITE_TOKEN"
+  curl -s "https://api.buildkite.com/v2/organizations/${org}/pipelines/${pipeline}/builds/$build_number/cancel" \
+    -X PUT \
+    -H "Authorization: Bearer $BUILDKITE_TOKEN"
+}
+
+buildkite-agent meta-data set bailed-job-id "$BUILDKITE_JOB_ID"
+
+add_annotation
+cancel_build
