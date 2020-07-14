@@ -1,12 +1,3 @@
 #!/bin/bash
 
-# pwd && ls -l
-# echo ""
-# echo ""
-# (cd "$(dirname $0)" && pwd && ls -l)
-# echo ""
-# echo ""
-# (cd "$(dirname $0)/.." && pwd && ls -l)
-# echo "$0"
-# (cd /var/lib/buildkite-agent/plugins/github-com-chrisdothtml-bail-early-buildkite-plugin-* && ls -l)
-python /var/lib/buildkite-agent/plugins/github-com-chrisdothtml-bail-early-buildkite-plugin-*/script.py
+python "$BUILDKITE_PLUGINS_PATH/*bail-early*/bail-early.py"
