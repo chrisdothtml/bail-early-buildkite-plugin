@@ -1,5 +1,5 @@
 #!/bin/bash
 
 python <<EOF
-  print("python works!")
+print("python works!")
 EOF
