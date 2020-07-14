@@ -1,3 +1,56 @@
 #!/bin/bash
 
-python "$BUILDKITE_PLUGINS_PATH"/*bail-early*/bail-early.py
+if [ "$BUILDKITE_COMMAND_EXIT_STATUS" = "0" ]; then
+  echo "command exited 0; exiting"
+  exit 0
+fi
+
+if_condition="$BUILDKITE_PLUGIN_BAIL_EARLY_IF"
+
+if [ -n "$if_condition" ]; then
+  if [[ "$if_condition" =~ \] ]]; then
+    echo "'if' condition cannot contain brackets; exiting"
+    exit 0
+  fi
+
+  if eval "[ $if_condition ]"; then
+    echo "'if' condition evaluated true; continuing"
+  else
+    echo "'if' condition evaluated false; exiting"
+    exit 0
+  fi
+fi
+
+org="$BUILDKITE_ORGANIZATION_SLUG"
+pipeline="$BUILDKITE_PIPELINE_SLUG"
+build_id="$BUILDKITE_BUILD_ID"
+build_number="$BUILDKITE_BUILD_NUMBER"
+api_token="$BUILDKITE_AGENT_ACCESS_TOKEN"
+
+if [ -n "$BUILDKITE_TRIGGERED_FROM_BUILD_NUMBER" ] && [ -n "$BUILDKITE_TOKEN" ]; then
+  pipeline="$BUILDKITE_TRIGGERED_FROM_BUILD_PIPELINE_SLUG"
+  build_id="$BUILDKITE_TRIGGERED_FROM_BUILD_ID"
+  build_number="$BUILDKITE_TRIGGERED_FROM_BUILD_NUMBER"
+  api_token="$BUILDKITE_TOKEN"
+else
+  echo "NOTICE: build started from a trigger step, but no BUILDKITE_TOKEN provided; bailing triggered build only"
+fi
+
+annotation_body="This build was canceled early because of failure in <a href='https://buildkite.com/${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}/builds/${BUILDKITE_BUILD_NUMBER}#${BUILDKITE_JOB_ID}'>${BUILDKITE_ORGANIZATION_SLUG}/${BUILDKITE_PIPELINE_SLUG}#${BUILDKITE_BUILD_NUMBER}</a>."
+graphql_build_id="$(printf "Build---%s" "$build_id" | base64)"
+graphql_query="mutation {
+  buildAnnotate(input: {buildID: \"$graphql_build_id\", body: \"$annotation_body\", style: ERROR}) {
+    annotation {
+      uuid
+    }
+  }
+}"
+
+curl -s https://graphql.buildkite.com/v1 \
+  -X POST \
+  -H "Authorization: Bearer $api_token" \
+  -d "{ query: \"$graphql_query\" }"
+
+curl -s "https://api.buildkite.com/v2/organizations/${org}/pipelines/${pipeline}/builds/$build_number/cancel" \
+  -X PUT \
+  -H "Authorization: Bearer $api_token"
